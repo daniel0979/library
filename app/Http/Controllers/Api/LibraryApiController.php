@@ -13,6 +13,7 @@ use App\Models\Notification;
 use App\Models\Payment;
 use App\Models\Reservation;
 use App\Models\Subscription;
+use App\Services\ExternalBookReaderService;
 use App\Services\FineService;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
@@ -515,6 +516,41 @@ class LibraryApiController extends Controller
         });
 
         return response()->json($result);
+    }
+
+    public function readBorrowedBook(Request $request, BorrowTransaction $borrow, ExternalBookReaderService $readerService)
+    {
+        if ($borrow->user_id !== $request->user()->id && $request->user()->role?->name !== 'admin') {
+            return response()->json(['message' => 'Not allowed'], 403);
+        }
+
+        if (! in_array($borrow->status, ['borrowed', 'overdue'], true)) {
+            return response()->json(['message' => 'Only active borrowed books can be read online'], 422);
+        }
+
+        $borrow->loadMissing('book:id,title,author,isbn');
+        if (! $borrow->book) {
+            return response()->json(['message' => 'Book not found'], 404);
+        }
+
+        $reader = $readerService->resolve($borrow->book);
+        $libraryLinks = $readerService->buildGlobalLibraryLinks($borrow->book);
+
+        return response()->json([
+            'borrow_id' => $borrow->id,
+            'book' => [
+                'id' => $borrow->book->id,
+                'title' => $borrow->book->title,
+                'author' => $borrow->book->author,
+                'isbn' => $borrow->book->isbn,
+            ],
+            'reader' => $reader,
+            'has_direct_reader' => (bool) ($reader && ! empty($reader['url'])),
+            'library_links' => $libraryLinks,
+            'message' => $reader && ! empty($reader['url'])
+                ? 'Direct reader found.'
+                : 'Direct reader unavailable. Use global library links.',
+        ]);
     }
 
     public function reserve(Request $request, PaymentService $paymentService)

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\LibraryApiController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\BookCatalogController;
+use App\Http\Controllers\BorrowReaderController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +22,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
+    Route::get('/borrowed/{borrow}/reader', [BorrowReaderController::class, 'show'])->name('borrowed.reader');
 });
 
 Route::get('/books', [BookCatalogController::class, 'index'])->name('books.index');
@@ -45,6 +47,7 @@ Route::middleware('auth')->prefix('api/library')->group(function () {
         Route::post('/borrow', [LibraryApiController::class, 'borrow']);
         Route::get('/borrow/my', [LibraryApiController::class, 'myBorrows']);
         Route::post('/borrow/{borrow}/return', [LibraryApiController::class, 'returnBook']);
+        Route::get('/borrow/{borrow}/read', [LibraryApiController::class, 'readBorrowedBook']);
 
         Route::post('/reserve', [LibraryApiController::class, 'reserve']);
 

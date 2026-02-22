@@ -39,4 +39,12 @@ return [
         'key' => env('EXCHANGERATE_API_KEY'),
     ],
 
+    'google_books' => [
+        'key' => env('GOOGLE_BOOKS_API_KEY'),
+    ],
+
+    'open_library' => [
+        'contact' => env('OPEN_LIBRARY_CONTACT'),
+    ],
+
 ];

@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             MembershipPlanSeeder::class,
             LibraryDemoSeeder::class,
+            RandomBooksSeeder::class,
             AdminUserSeeder::class,
         ]);
     }

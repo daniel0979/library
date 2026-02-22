@@ -295,6 +295,163 @@ body {
     animation: botHalo 2.2s ease-in-out infinite;
 }
 
+.borrow-action-row {
+    position: relative;
+    overflow: visible;
+}
+
+#readBookBtn {
+    background: linear-gradient(135deg, #4f46e5, #06b6d4);
+    box-shadow: 0 12px 24px -16px rgba(79, 70, 229, 0.95);
+}
+
+#readBookBtn:hover {
+    transform: translateY(-1px) scale(1.02);
+    filter: saturate(1.08);
+}
+
+#readBookBtn.read-btn-celebrate {
+    animation: readPopIn 650ms cubic-bezier(0.22, 1, 0.36, 1), readPulse 1.8s ease-in-out 2 680ms;
+}
+
+.borrow-burst {
+    position: absolute;
+    left: var(--burst-x);
+    top: var(--burst-y);
+    width: 10px;
+    height: 10px;
+    border-radius: 9999px;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, #67e8f9 0%, #22d3ee 48%, rgba(34, 211, 238, 0) 72%);
+    animation: borrowBurst 860ms ease-out forwards;
+}
+
+.borrow-burst::before,
+.borrow-burst::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    border: 2px solid rgba(14, 165, 233, 0.55);
+    animation: borrowRing 860ms ease-out forwards;
+}
+
+.borrow-burst::after {
+    border-color: rgba(99, 102, 241, 0.55);
+    animation-delay: 120ms;
+}
+
+.reader-shell {
+    position: relative;
+}
+
+.reader-hero {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(125, 211, 252, 0.45);
+    background:
+        radial-gradient(circle at 12% 18%, rgba(165, 243, 252, 0.55), transparent 42%),
+        radial-gradient(circle at 86% 18%, rgba(186, 230, 253, 0.6), transparent 44%),
+        linear-gradient(145deg, rgba(240, 249, 255, 0.94), rgba(236, 253, 245, 0.9));
+    box-shadow: 0 24px 40px -34px rgba(14, 116, 144, 0.7);
+}
+
+.reader-hero::after {
+    content: '';
+    position: absolute;
+    inset: -40% -20%;
+    background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.32) 48%, transparent 62%);
+    animation: readerSweep 9s linear infinite;
+    pointer-events: none;
+}
+
+.reader-pill {
+    border-radius: 9999px;
+    border: 1px solid rgba(14, 116, 144, 0.35);
+    background: rgba(255, 255, 255, 0.7);
+    color: #0f172a;
+    font-weight: 600;
+    padding: 0.35rem 0.7rem;
+}
+
+.reader-panel {
+    border-radius: 1rem;
+    border: 1px solid #dbe8f5;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.92));
+    box-shadow: 0 22px 38px -30px rgba(15, 23, 42, 0.5);
+}
+
+.reader-frame-wrap {
+    position: relative;
+    width: 100%;
+    min-height: 26rem;
+    overflow: hidden;
+    border-radius: 0.9rem;
+    border: 1px solid #dbe2ea;
+    background: #ffffff;
+}
+
+.reader-iframe {
+    width: 100%;
+    height: min(72vh, 48rem);
+    border: 0;
+    background: #ffffff;
+}
+
+.reader-source-chip {
+    border-radius: 9999px;
+    border: 1px solid rgba(251, 191, 36, 0.45);
+    background: rgba(255, 251, 235, 0.82);
+    color: #92400e;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 0.28rem 0.62rem;
+    text-transform: uppercase;
+}
+
+.reader-mini-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    border-radius: 0.8rem;
+    border: 1px solid #dbe2ea;
+    background: #ffffff;
+    padding: 0.6rem 0.7rem;
+}
+
+.reader-mini-card:hover {
+    border-color: #7dd3fc;
+    background: #f0f9ff;
+}
+
+.reader-mini-card.is-active {
+    border-color: #38bdf8;
+    background: #ecfeff;
+}
+
+.reader-link-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    border-radius: 0.9rem;
+    border: 1px solid #dbe2ea;
+    background: #ffffff;
+    padding: 0.8rem 0.9rem;
+    box-shadow: 0 12px 22px -20px rgba(15, 23, 42, 0.6);
+}
+
+.reader-link-card:hover {
+    transform: translateY(-2px);
+    border-color: #7dd3fc;
+    background: #f0f9ff;
+}
+
+.reader-link-card-inline {
+    animation: sourceLiftIn 460ms ease-out both;
+}
+
 [data-reveal].reveal-ready {
     opacity: 0;
     transform: translateY(18px);
@@ -381,6 +538,72 @@ textarea {
     }
 }
 
+@keyframes readPopIn {
+    0% {
+        transform: translateY(6px) scale(0.92);
+        opacity: 0.5;
+    }
+    70% {
+        transform: translateY(-2px) scale(1.06);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes readPulse {
+    0%, 100% {
+        box-shadow: 0 12px 24px -16px rgba(79, 70, 229, 0.95);
+    }
+    50% {
+        box-shadow: 0 18px 28px -12px rgba(14, 165, 233, 0.95);
+    }
+}
+
+@keyframes borrowBurst {
+    0% {
+        opacity: 0.9;
+        transform: translate(-50%, -50%) scale(0.7);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(6.8);
+    }
+}
+
+@keyframes borrowRing {
+    0% {
+        opacity: 0.65;
+        transform: scale(0.7);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(3.6);
+    }
+}
+
+@keyframes sourceLiftIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes readerSweep {
+    from {
+        transform: translateX(-40%) rotate(0.5deg);
+    }
+    to {
+        transform: translateX(40%) rotate(0.5deg);
+    }
+}
+
 @keyframes thinkDots {
     0%, 80%, 100% {
         transform: translateY(0);
@@ -404,6 +627,12 @@ textarea {
     .purchase-bot-launcher,
     .purchase-bot-halo,
     .purchase-bot-dots i,
+    .reader-hero::after,
+    #readBookBtn.read-btn-celebrate,
+    .borrow-burst,
+    .borrow-burst::before,
+    .borrow-burst::after,
+    .reader-link-card-inline,
     [data-reveal],
     a,
     button,
@@ -432,5 +661,9 @@ textarea {
 
     .purchase-bot-think {
         max-width: 11.5rem;
+    }
+
+    .reader-iframe {
+        height: min(70vh, 34rem);
     }
 }

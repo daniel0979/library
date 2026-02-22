@@ -30,9 +30,10 @@
 
                 <div id="bookDetailActions" data-book-id="{{ $book->id }}" data-is-authenticated="{{ auth()->check() ? '1' : '0' }}" class="pt-2 border-t border-slate-200">
                     <h2 class="font-semibold text-slate-900 mb-2">Actions</h2>
-                    <div class="flex flex-wrap items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-2 borrow-action-row">
                         <button type="button" id="borrowBookBtn" class="rounded bg-blue-600 text-white px-3 py-2 text-sm">{{ auth()->check() ? 'Borrow This Book' : 'Borrow (Login Required)' }}</button>
                         <button type="button" id="reserveBookBtn" class="rounded bg-amber-600 text-white px-3 py-2 text-sm">{{ auth()->check() ? 'Reserve This Book' : 'Reserve (Login Required)' }}</button>
+                        <a href="#" id="readBookBtn" class="hidden rounded bg-indigo-600 text-white px-3 py-2 text-sm">Read This Book</a>
                     </div>
                     <div class="mt-3 flex flex-wrap items-end gap-2">
                         <div>

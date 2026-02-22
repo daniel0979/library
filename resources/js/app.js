@@ -897,14 +897,22 @@ if (app) {
         }
 
         const borrows = await api('/api/library/borrow/my', { headers: { 'Content-Type': 'application/json' } });
-        el.innerHTML = borrows.map(b => `
-            <div class="border rounded p-2 text-sm flex items-center justify-between gap-2">
-                <div>
-                    <p class="font-medium">${b.book?.title || 'N/A'} (${b.status})</p>
-                    <p class="text-slate-600">Due: ${b.due_date} | Fine: ${money(b.fine_amount)}</p>
-                </div>
-                ${b.status !== 'returned' ? `<button data-return="${b.id}" class="returnBtn rounded bg-slate-800 text-white px-2 py-1 text-xs">Return</button>` : ''}
-            </div>`).join('');
+        el.innerHTML = borrows.map((b) => {
+            const status = String(b.status || '');
+            const isActiveBorrow = ['borrowed', 'overdue'].includes(status);
+
+            return `
+                <div class="border rounded p-2 text-sm flex items-center justify-between gap-2">
+                    <div>
+                        <p class="font-medium">${b.book?.title || 'N/A'} (${status})</p>
+                        <p class="text-slate-600">Due: ${b.due_date} | Fine: ${money(b.fine_amount)}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        ${isActiveBorrow ? `<a href="/borrowed/${b.id}/reader" class="rounded bg-indigo-600 text-white px-2 py-1 text-xs">Read</a>` : ''}
+                        ${status !== 'returned' ? `<button data-return="${b.id}" class="returnBtn rounded bg-slate-800 text-white px-2 py-1 text-xs">Return</button>` : ''}
+                    </div>
+                </div>`;
+        }).join('');
 
         el.querySelectorAll('.returnBtn').forEach(btn => {
             btn.addEventListener('click', async () => {
@@ -1169,9 +1177,11 @@ if (bookDetailActions) {
     const isAuthenticated = bookDetailActions.dataset.isAuthenticated === '1';
     const borrowBtn = document.getElementById('borrowBookBtn');
     const reserveBtn = document.getElementById('reserveBookBtn');
+    const readBtn = document.getElementById('readBookBtn');
     const planSelect = document.getElementById('bookPlanSelect');
     const subscribeBtn = document.getElementById('subscribeFromBookBtn');
     const messageEl = document.getElementById('bookActionMessage');
+    const borrowActionRow = bookDetailActions.querySelector('.borrow-action-row');
     const authPromptModal = document.getElementById('bookAuthPromptModal');
     const authLoginPanel = document.getElementById('bookAuthLoginPanel');
     const authRegisterPanel = document.getElementById('bookAuthRegisterPanel');
@@ -1197,9 +1207,57 @@ if (bookDetailActions) {
             btn.classList.toggle('opacity-70', loading);
             btn.classList.toggle('cursor-not-allowed', loading);
         });
+        if (readBtn) {
+            readBtn.classList.toggle('opacity-70', loading);
+            readBtn.classList.toggle('pointer-events-none', loading);
+        }
         if (planSelect) {
             planSelect.disabled = loading;
         }
+    };
+
+    const playBorrowReadAnimation = () => {
+        if (!readBtn || !borrowActionRow) {
+            return;
+        }
+
+        readBtn.classList.remove('read-btn-celebrate');
+        // Force reflow so animation can replay on repeated borrows.
+        void readBtn.offsetWidth;
+        readBtn.classList.add('read-btn-celebrate');
+
+        const burst = document.createElement('span');
+        burst.className = 'borrow-burst';
+
+        const rowRect = borrowActionRow.getBoundingClientRect();
+        const btnRect = readBtn.getBoundingClientRect();
+        const centerX = (btnRect.left - rowRect.left) + (btnRect.width / 2);
+        const centerY = (btnRect.top - rowRect.top) + (btnRect.height / 2);
+
+        burst.style.setProperty('--burst-x', `${centerX}px`);
+        burst.style.setProperty('--burst-y', `${centerY}px`);
+
+        borrowActionRow.appendChild(burst);
+        window.setTimeout(() => burst.remove(), 900);
+    };
+
+    const setReadButton = (borrowId, animate = false) => {
+        if (!readBtn || !borrowId) {
+            return;
+        }
+        readBtn.href = `/borrowed/${borrowId}/reader`;
+        readBtn.classList.remove('hidden');
+        if (animate) {
+            playBorrowReadAnimation();
+        }
+    };
+
+    const hideReadButton = () => {
+        if (!readBtn) {
+            return;
+        }
+        readBtn.classList.add('hidden');
+        readBtn.setAttribute('href', '#');
     };
 
     const setAuthTab = (tab) => {
@@ -1303,8 +1361,61 @@ if (bookDetailActions) {
         }
     };
 
+    const loadCurrentBorrowForBook = async () => {
+        if (!isAuthenticated) {
+            hideReadButton();
+            return;
+        }
+
+        try {
+            const borrows = await api('/api/library/borrow/my', { method: 'GET' });
+            const activeBorrow = (Array.isArray(borrows) ? borrows : []).find((item) => (
+                Number(item?.book?.id || 0) === bookId
+                && ['borrowed', 'overdue'].includes(String(item?.status || ''))
+            ));
+
+            if (activeBorrow?.id) {
+                setReadButton(activeBorrow.id, false);
+                return;
+            }
+
+            hideReadButton();
+        } catch (_) {
+            hideReadButton();
+        }
+    };
+
     if (borrowBtn) {
-        borrowBtn.addEventListener('click', () => runAction('/api/library/borrow', { book_id: bookId }));
+        borrowBtn.addEventListener('click', async () => {
+            if (!requireAuth('login')) return;
+            if (!bookId) {
+                showMessage('Invalid book.', 'error');
+                return;
+            }
+
+            setLoading(true);
+            showMessage('Processing request...', 'info');
+
+            try {
+                const borrow = await api('/api/library/borrow', {
+                    method: 'POST',
+                    body: JSON.stringify({ book_id: bookId }),
+                });
+                if (borrow?.id) {
+                    setReadButton(borrow.id, true);
+                }
+                showMessage('Borrowed successfully. You can read this book now.', 'success');
+            } catch (e) {
+                if (String(e.message || '').toLowerCase().includes('active membership required')) {
+                    showMessage('Active membership is required. Please subscribe to a plan from Dashboard.', 'error');
+                    return;
+                }
+
+                showMessage(e.message || 'Unable to complete request.', 'error');
+            } finally {
+                setLoading(false);
+            }
+        });
     }
 
     if (reserveBtn) {
@@ -1356,6 +1467,7 @@ if (bookDetailActions) {
     });
 
     loadPlans();
+    loadCurrentBorrowForBook();
 }
 
 const initPurchaseBot = () => {
