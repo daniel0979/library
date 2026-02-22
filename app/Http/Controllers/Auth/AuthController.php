@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\NotificationFeedService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -37,7 +38,7 @@ class AuthController extends Controller
         return view('auth.register');
     }
 
-    public function register(Request $request): RedirectResponse
+    public function register(Request $request, NotificationFeedService $notificationFeed): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -56,6 +57,8 @@ class AuthController extends Controller
             'role_id' => $memberRoleId,
             'status' => 'active',
         ]);
+
+        $notificationFeed->notifyNewMember($user);
 
         Auth::login($user);
 

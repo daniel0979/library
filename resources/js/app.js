@@ -967,6 +967,52 @@ if (app) {
             </div>`).join('');
     };
 
+    const escapeHtml = (value) => String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+    const formatNotificationTime = (value) => {
+        if (!value) {
+            return '-';
+        }
+
+        const stamp = new Date(value);
+        if (Number.isNaN(stamp.getTime())) {
+            return String(value);
+        }
+
+        return stamp.toLocaleString();
+    };
+
+    const resolveNotificationLabel = (notification) => {
+        const message = String(notification.message || '').toLowerCase();
+
+        if (message.includes('[community]')) {
+            return 'New Member';
+        }
+
+        if (message.includes('[book]')) {
+            return 'New Book';
+        }
+
+        if (message.includes('[welcome]')) {
+            return 'Welcome';
+        }
+
+        if (notification.type === 'due_reminder') {
+            return 'Due Reminder';
+        }
+
+        if (notification.type === 'overdue_alert') {
+            return 'Overdue Alert';
+        }
+
+        return 'General';
+    };
+
     const loadNotifications = async () => {
         const el = document.getElementById('notificationList');
         if (!isAuthenticated) {
@@ -975,11 +1021,16 @@ if (app) {
         }
 
         const notifications = await api('/api/library/notifications/my', { headers: { 'Content-Type': 'application/json' } });
+        if (!notifications.length) {
+            el.innerHTML = '<div class="border rounded p-2 text-sm text-slate-600">No notifications yet.</div>';
+            return;
+        }
+
         el.innerHTML = notifications.map(n => `
             <div class="border rounded p-2 text-sm">
-                <p class="font-medium">${n.type}</p>
-                <p class="text-slate-600">${n.message}</p>
-                <p class="text-xs text-slate-500">${n.sent_at || n.created_at}</p>
+                <p class="font-medium">${escapeHtml(resolveNotificationLabel(n))}</p>
+                <p class="text-slate-600">${escapeHtml(n.message)}</p>
+                <p class="text-xs text-slate-500">${escapeHtml(formatNotificationTime(n.sent_at || n.created_at))}</p>
             </div>`).join('');
     };
 
@@ -1167,6 +1218,16 @@ if (app) {
     refreshAll().catch(() => {
         // Keep the dashboard usable even if one API call fails.
     });
+
+    if (isAuthenticated) {
+        const notificationsPollId = window.setInterval(() => {
+            loadNotifications().catch(() => {
+                // Ignore polling errors to keep the dashboard responsive.
+            });
+        }, 15000);
+
+        window.addEventListener('beforeunload', () => window.clearInterval(notificationsPollId));
+    }
 }
 
 const bookDetailActions = document.getElementById('bookDetailActions');

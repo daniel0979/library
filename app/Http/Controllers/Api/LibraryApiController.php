@@ -15,6 +15,7 @@ use App\Models\Reservation;
 use App\Models\Subscription;
 use App\Services\ExternalBookReaderService;
 use App\Services\FineService;
+use App\Services\NotificationFeedService;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -93,7 +94,7 @@ class LibraryApiController extends Controller
         ]);
     }
 
-    public function storeBook(Request $request)
+    public function storeBook(Request $request, NotificationFeedService $notificationFeed)
     {
         $validated = $request->validate([
             'isbn' => ['required', 'string', 'max:20', 'unique:books,isbn'],
@@ -122,6 +123,8 @@ class LibraryApiController extends Controller
             'description' => $validated['description'] ?? null,
             'cover_image_path' => $coverImagePath,
         ]);
+
+        $notificationFeed->notifyNewBook($book);
 
         return response()->json($book->load('category:id,name'), 201);
     }
